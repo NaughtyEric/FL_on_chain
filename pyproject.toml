@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fl-on-chain-client"
+version = "0.1.0"
+description = "Portable Flower client for local CIFAR-100 training"
+requires-python = ">=3.10"
+dependencies = [
+  "flwr>=1.10,<2",
+  "numpy>=1.24",
+  "torch>=2.1",
+  "torchvision>=0.16",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.4"]
+
+[tool.setuptools]
+package-dir = {"" = "src/python"}
+
+[tool.setuptools.packages.find]
+where = ["src/python"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src/python"]
+testpaths = ["tests/python"]

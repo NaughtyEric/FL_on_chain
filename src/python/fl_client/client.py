@@ -1,0 +1,46 @@
+from __future__ import annotations
+
+from pathlib import Path
+
+import flwr as fl
+import torch
+from torch.utils.data import DataLoader, Dataset, Subset
+
+from .config import ClientConfig
+from .device import select_device
+from .model import CIFAR100Model
+from .parameters import get_parameters, set_parameters
+from .training import evaluate, partition_indices, train
+
+
+class FlowerClient(fl.client.NumPyClient):
+    def __init__(self, config: ClientConfig, dataset: Dataset) -> None:
+        config.validate(require_server=True)
+        self.config = config
+        self.device = select_device(config.device)
+        self.model = CIFAR100Model().to(self.device)
+        indices = partition_indices(
+            len(dataset), config.partition_id, config.num_partitions, config.seed
+        )
+        self.loader = DataLoader(Subset(dataset, indices), batch_size=config.batch_size, shuffle=True, num_workers=config.num_workers)
+        self.sample_count = len(indices)
+
+    def get_parameters(self, config: dict) -> list:
+        return get_parameters(self.model)
+
+    def fit(self, parameters: list, config: dict) -> tuple[list, int, dict]:
+        set_parameters(self.model, parameters)
+        loss = train(self.model, self.loader, self.device, self.config.local_epochs, self.config.learning_rate)
+        return get_parameters(self.model), self.sample_count, {"loss": float(loss)}
+
+    def evaluate(self, parameters: list, config: dict) -> tuple[float, int, dict]:
+        set_parameters(self.model, parameters)
+        loss, accuracy = evaluate(self.model, self.loader, self.device)
+        return float(loss), self.sample_count, {"accuracy": float(accuracy)}
+
+
+def tls_credentials(config: ClientConfig) -> bytes | None:
+    config.validate(require_server=False)
+    if config.ca_cert is None:
+        return None
+    return Path(config.ca_cert).read_bytes()

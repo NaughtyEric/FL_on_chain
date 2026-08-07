@@ -1,0 +1,15 @@
+pyproject.toml
+src/python/fl_on_chain_client.egg-info/PKG-INFO
+src/python/fl_on_chain_client.egg-info/SOURCES.txt
+src/python/fl_on_chain_client.egg-info/dependency_links.txt
+src/python/fl_on_chain_client.egg-info/requires.txt
+src/python/fl_on_chain_client.egg-info/top_level.txt
+src/python/fl_client/__init__.py
+src/python/fl_client/__main__.py
+src/python/fl_client/client.py
+src/python/fl_client/config.py
+src/python/fl_client/device.py
+src/python/fl_client/model.py
+src/python/fl_client/parameters.py
+src/python/fl_client/training.py
+src/python/fl_on_chain_client.egg-info/SOURCES.txt
