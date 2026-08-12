@@ -3,26 +3,26 @@ from __future__ import annotations
 from pathlib import Path
 
 import flwr as fl
-import torch
-from torch.utils.data import DataLoader, Dataset, Subset
+from torch.utils.data import DataLoader, Subset
 
 from .config import ClientConfig
 from .device import select_device
-from .model import CIFAR100Model
+from .model import CIFAR100Model, COARSE_CLASSES
 from .parameters import get_parameters, set_parameters
-from .training import evaluate, partition_indices, train
+from .training import CoarseLabelDataset, evaluate, IndexableDataset, partition_indices, train
 
 
 class FlowerClient(fl.client.NumPyClient):
-    def __init__(self, config: ClientConfig, dataset: Dataset) -> None:
+    def __init__(self, config: ClientConfig, dataset: IndexableDataset) -> None:
         config.validate(require_server=True)
         self.config = config
         self.device = select_device(config.device)
-        self.model = CIFAR100Model().to(self.device)
+        self.model = CIFAR100Model(num_classes=COARSE_CLASSES).to(self.device)
+        coarse = CoarseLabelDataset(dataset)
         indices = partition_indices(
-            len(dataset), config.partition_id, config.num_partitions, config.seed
+            len(coarse), config.partition_id, config.num_partitions, config.seed
         )
-        self.loader = DataLoader(Subset(dataset, indices), batch_size=config.batch_size, shuffle=True, num_workers=config.num_workers)
+        self.loader = DataLoader(Subset(coarse, indices), batch_size=config.batch_size, shuffle=True, num_workers=config.num_workers)
         self.sample_count = len(indices)
 
     def get_parameters(self, config: dict) -> list:

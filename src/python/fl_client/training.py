@@ -1,10 +1,36 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from typing import Any, Protocol
 
 import torch
 from torch import nn
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader, Dataset
+
+
+class IndexableDataset(Protocol):
+    """A map-style dataset: sized and indexable by integer position."""
+
+    def __len__(self) -> int: ...
+
+    def __getitem__(self, index: int) -> Any: ...
+
+
+class CoarseLabelDataset(Dataset):
+    """Wrap a CIFAR-100 dataset to expose coarse (superclass) labels.
+
+    The fine labels of CIFAR-100 are ordered so that each of the 20 coarse
+    classes spans five consecutive fine labels, hence ``coarse = fine // 5``.
+    """
+
+    def __init__(self, dataset: IndexableDataset) -> None:
+        self.dataset = dataset
+
+    def __len__(self) -> int:
+        return len(self.dataset)
+
+    def __getitem__(self, index: int) -> tuple[object, int]:
+        inputs, fine_label = self.dataset[index]
+        return inputs, int(fine_label) // 5
 
 
 def partition_indices(length: int, partition_id: int, num_partitions: int, seed: int) -> list[int]:
