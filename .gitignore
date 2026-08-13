@@ -4,3 +4,4 @@
 /.venv
 /build
 claude-init.ps1
+**/node_modules/
