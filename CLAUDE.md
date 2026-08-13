@@ -7,7 +7,7 @@
 - `src/python` — Flower 客户端/服务端，PyTorch 本地训练 CIFAR-100（20 个粗粒度标签）。
   - 客户端详见 `src/python/fl_client/CLAUDE.md`
   - 服务端详见 `src/python/fl_server/CLAUDE.md`
-- `src/eth` — 以太坊智能合约，目前为空，待实现。
+- `src/eth` — 以太坊智能合约（L1/L2 框架，未实现），见 `src/eth/CLAUDE.md`。
 - `scripts/` — 本地多客户端仿真，见 `scripts/CLAUDE.md`。
 
 ## 约定
