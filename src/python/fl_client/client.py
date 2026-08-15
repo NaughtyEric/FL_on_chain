@@ -1,28 +1,26 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import flwr as fl
 from torch.utils.data import DataLoader, Subset
 
 from .config import ClientConfig
 from .device import select_device
-from .model import CIFAR100Model, COARSE_CLASSES
+from .model import CIFAR100ResNet, COARSE_CLASSES
 from .parameters import get_parameters, set_parameters
-from .training import CoarseLabelDataset, evaluate, IndexableDataset, partition_indices, train
+from .training import evaluate, IndexableDataset, partition_indices, train
 
 
 class FlowerClient(fl.client.NumPyClient):
     def __init__(self, config: ClientConfig, dataset: IndexableDataset) -> None:
-        config.validate(require_server=True)
+        """``dataset`` is a map-style dataset already yielding ``(inputs, coarse_label)``."""
+        config.validate()
         self.config = config
         self.device = select_device(config.device)
-        self.model = CIFAR100Model(num_classes=COARSE_CLASSES).to(self.device)
-        coarse = CoarseLabelDataset(dataset)
+        self.model = CIFAR100ResNet(num_classes=COARSE_CLASSES).to(self.device)
         indices = partition_indices(
-            len(coarse), config.partition_id, config.num_partitions, config.seed
+            len(dataset), config.partition_id, config.num_partitions, config.seed
         )
-        self.loader = DataLoader(Subset(coarse, indices), batch_size=config.batch_size, shuffle=True, num_workers=config.num_workers)
+        self.loader = DataLoader(Subset(dataset, indices), batch_size=config.batch_size, shuffle=True, num_workers=config.num_workers)
         self.sample_count = len(indices)
 
     def get_parameters(self, config: dict) -> list:
@@ -37,10 +35,3 @@ class FlowerClient(fl.client.NumPyClient):
         set_parameters(self.model, parameters)
         loss, accuracy = evaluate(self.model, self.loader, self.device)
         return float(loss), self.sample_count, {"accuracy": float(accuracy)}
-
-
-def tls_credentials(config: ClientConfig) -> bytes | None:
-    config.validate(require_server=False)
-    if config.ca_cert is None:
-        return None
-    return Path(config.ca_cert).read_bytes()

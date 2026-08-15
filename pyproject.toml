@@ -5,13 +5,14 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "fl-on-chain-client"
 version = "0.1.0"
-description = "Portable Flower client for local CIFAR-100 training"
+description = "Async FedAsync CIFAR-100 Flower app (SuperLink)"
 requires-python = ">=3.10"
 dependencies = [
   "flwr>=1.10,<2",
   "numpy>=1.24",
   "torch>=2.1",
   "torchvision>=0.16",
+  "datasets>=3.0",
 ]
 
 [project.optional-dependencies]
@@ -26,3 +27,26 @@ where = ["src/python"]
 [tool.pytest.ini_options]
 pythonpath = ["src/python"]
 testpaths = ["tests/python"]
+
+[tool.flwr.app]
+publisher = "local"
+# Built-in publish rules allow .gitignore but the build-time include set does
+# not, so user fab-exclude rules trigger a conflict unless it is excluded here.
+fab-exclude = ["src/eth/**", ".gitignore"]
+
+[tool.flwr.app.components]
+serverapp = "fl_server.serverapp:app"
+clientapp = "fl_client.clientapp:app"
+
+[tool.flwr.app.config]
+num_steps = 20
+alpha = 0.5
+tau = 1.0
+staleness_fn = "linear"
+staleness_bound = -1
+max_concurrency = 2
+min_clients = 2
+ttl = 600.0
+evaluate_every = 5
+output_path = "artifacts/global_parameters.npz"
+init_weights = ""

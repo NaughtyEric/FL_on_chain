@@ -1,5 +1,5 @@
-"""Flower server package for federated CIFAR-100 training."""
+"""Flower server package: async FedAsync orchestration (SuperLink ServerApp)."""
 
-from . import config, server
+from . import fedasync, serverapp
 
-__all__ = ["config", "server"]
+__all__ = ["fedasync", "serverapp"]

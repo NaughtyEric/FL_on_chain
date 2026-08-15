@@ -1,65 +1,54 @@
+from pathlib import Path
+
 import flwr as fl
 import pytest
 
-from fl_client.model import CIFAR100Model, COARSE_CLASSES
-from fl_server.config import ServerConfig
-from fl_server.server import (
-    build_strategy,
-    initial_parameters,
-    weighted_average,
-    weighted_loss,
-)
+from fl_client.model import CIFAR100ResNet, COARSE_CLASSES
+from fl_client.parameters import get_parameters, save_parameters
+from fl_server.fedasync import AsyncConfig, _parse_optional_path
+from fl_server.serverapp import initial_parameters, weighted_average, weighted_loss
 
 
-def test_server_config_requires_address_and_rounds():
+def test_async_config_validation():
+    AsyncConfig().validate()
     with pytest.raises(ValueError):
-        ServerConfig(server_address="", num_rounds=3).validate()
+        AsyncConfig(num_steps=0).validate()
     with pytest.raises(ValueError):
-        ServerConfig(server_address="localhost:8080", num_rounds=0).validate()
+        AsyncConfig(staleness_fn="quadratic").validate()
 
 
-def test_server_config_fraction_bounds():
-    with pytest.raises(ValueError):
-        ServerConfig(server_address="a", num_rounds=1, fraction_fit=0.0).validate()
-    with pytest.raises(ValueError):
-        ServerConfig(server_address="a", num_rounds=1, fraction_fit=1.5).validate()
-    with pytest.raises(ValueError):
-        ServerConfig(server_address="a", num_rounds=1, fraction_evaluate=-0.1).validate()
-
-
-def test_server_config_min_clients_consistency():
-    with pytest.raises(ValueError):
-        ServerConfig(server_address="a", num_rounds=1, min_available_clients=1, min_fit_clients=2).validate()
-    with pytest.raises(ValueError):
-        ServerConfig(server_address="a", num_rounds=1, min_available_clients=1, min_evaluate_clients=2).validate()
-    with pytest.raises(ValueError):
-        ServerConfig(server_address="a", num_rounds=1, fraction_evaluate=0.0, min_evaluate_clients=1).validate()
-
-
-def test_tls_files_must_be_complete(tmp_path):
-    ca = tmp_path / "ca.pem"
-    ca.write_text("test")
-    with pytest.raises(ValueError):
-        ServerConfig("localhost:8080", 1, ca_cert=ca).validate()
+def test_parse_optional_path():
+    assert _parse_optional_path(None) is None
+    assert _parse_optional_path("") is None
+    assert _parse_optional_path("-1") is None
+    assert _parse_optional_path("none") is None
+    assert _parse_optional_path("artifacts/pretrained.npz") == Path("artifacts/pretrained.npz")
 
 
 def test_initial_parameters_match_model():
     parameters = initial_parameters()
     arrays = fl.common.parameters_to_ndarrays(parameters)
-    state = CIFAR100Model(num_classes=COARSE_CLASSES).state_dict()
+    state = CIFAR100ResNet(num_classes=COARSE_CLASSES).state_dict()
     assert len(arrays) == len(state)
     assert all(tuple(array.shape) == tuple(value.shape) for array, value in zip(arrays, state.values()))
 
 
-def test_build_strategy_wires_config():
-    strategy = build_strategy(ServerConfig(min_available_clients=3, min_fit_clients=2, min_evaluate_clients=2))
-    assert isinstance(strategy, fl.server.strategy.FedAvg)
-    assert strategy.min_available_clients == 3
-    assert strategy.min_fit_clients == 2
-    assert strategy.min_evaluate_clients == 2
-    assert strategy.initial_parameters is not None
-    assert strategy.evaluate_metrics_aggregation_fn is weighted_average
-    assert strategy.fit_metrics_aggregation_fn is weighted_loss
+def test_initial_parameters_loads_checkpoint(tmp_path):
+    checkpoint = tmp_path / "init.npz"
+    save_parameters(get_parameters(CIFAR100ResNet(num_classes=COARSE_CLASSES)), checkpoint)
+    parameters = initial_parameters(checkpoint)
+    arrays = fl.common.parameters_to_ndarrays(parameters)
+    state = CIFAR100ResNet(num_classes=COARSE_CLASSES).state_dict()
+    assert len(arrays) == len(state)
+    assert all(tuple(array.shape) == tuple(value.shape) for array, value in zip(arrays, state.values()))
+
+
+def test_initial_parameters_ignores_missing_checkpoint(tmp_path):
+    # Missing path falls back to random init without raising.
+    parameters = initial_parameters(tmp_path / "does-not-exist.npz")
+    assert len(fl.common.parameters_to_ndarrays(parameters)) == len(
+        CIFAR100ResNet(num_classes=COARSE_CLASSES).state_dict()
+    )
 
 
 def test_weighted_average():

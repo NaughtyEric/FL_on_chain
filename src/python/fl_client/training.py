@@ -17,9 +17,6 @@ class IndexableDataset(Protocol):
 
 class CoarseLabelDataset(Dataset):
     """Wrap a CIFAR-100 dataset to expose coarse (superclass) labels.
-
-    The fine labels of CIFAR-100 are ordered so that each of the 20 coarse
-    classes spans five consecutive fine labels, hence ``coarse = fine // 5``.
     """
 
     def __init__(self, dataset: IndexableDataset) -> None:

@@ -5,3 +5,6 @@
 /build
 claude-init.ps1
 **/node_modules/
+/.flwr
+/data
+/artifacts
