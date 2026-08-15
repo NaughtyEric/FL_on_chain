@@ -11,12 +11,12 @@ class ClientConfig:
     partition_id: int = 0
     num_partitions: int = 1
     seed: int = 42
-    batch_size: int = 64
+    batch_size: int = 128
     local_epochs: int = 1
     learning_rate: float = 0.1
     weight_decay: float = 5e-4
     momentum: float = 0.9
-    num_workers: int = 0
+    num_workers: int = 4
     device: str = "auto"
 
     @classmethod
@@ -26,12 +26,12 @@ class ClientConfig:
             partition_id=int(os.getenv("FL_PARTITION_ID", "0")),
             num_partitions=int(os.getenv("FL_NUM_PARTITIONS", "1")),
             seed=int(os.getenv("FL_SEED", "42")),
-            batch_size=int(os.getenv("FL_BATCH_SIZE", "64")),
+            batch_size=int(os.getenv("FL_BATCH_SIZE", "128")),
             local_epochs=int(os.getenv("FL_LOCAL_EPOCHS", "1")),
             learning_rate=float(os.getenv("FL_LEARNING_RATE", "0.1")),
             weight_decay=float(os.getenv("FL_WEIGHT_DECAY", "5e-4")),
             momentum=float(os.getenv("FL_MOMENTUM", "0.9")),
-            num_workers=int(os.getenv("FL_NUM_WORKERS", "0")),
+            num_workers=int(os.getenv("FL_NUM_WORKERS", "4")),
             device=os.getenv("FL_DEVICE", "auto"),
         )
 

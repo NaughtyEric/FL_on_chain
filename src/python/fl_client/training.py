@@ -58,15 +58,19 @@ def train(
         model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay
     )
     criterion = nn.CrossEntropyLoss()
+    use_amp = device.type == "cuda"  # mixed precision only pays off on NVIDIA GPUs
+    scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
     total_loss = 0.0
     count = 0
     for _ in range(epochs):
         for inputs, targets in loader:
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad(set_to_none=True)
-            loss = criterion(model(inputs), targets)
-            loss.backward()
-            optimizer.step()
+            with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=use_amp):
+                loss = criterion(model(inputs), targets)
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
             total_loss += loss.item() * inputs.size(0)
             count += inputs.size(0)
     return total_loss / max(count, 1)
@@ -75,11 +79,13 @@ def train(
 def evaluate(model: nn.Module, loader: DataLoader, device: torch.device) -> tuple[float, float]:
     model.eval()
     criterion = nn.CrossEntropyLoss()
+    use_amp = device.type == "cuda"
     loss_total = correct = count = 0
     with torch.no_grad():
         for inputs, targets in loader:
             inputs, targets = inputs.to(device), targets.to(device)
-            outputs = model(inputs)
+            with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=use_amp):
+                outputs = model(inputs)
             loss_total += criterion(outputs, targets).item() * inputs.size(0)
             correct += (outputs.argmax(1) == targets).sum().item()
             count += inputs.size(0)

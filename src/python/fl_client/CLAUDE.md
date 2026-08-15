@@ -24,7 +24,11 @@ Flower 客户端，独立包，位于 `src/python/fl_client`。
 
 - `device="auto"`（默认）经 `select_device` 解析：有 CUDA 用 GPU，否则回退 CPU（Apple 上优先 MPS）。
 - 客户端与 `scripts/pretrain_model.py`、`scripts/predict_samples.py` 都走这条路径；可用 `FL_DEVICE=cpu|cuda` 强制指定。
-- 注意：当前 venv 是 CPU 版 torch（`2.13.0+cpu`），`torch.cuda.is_available()` 为 False，`auto` 实际落在 CPU；要真正用 GPU 需安装 CUDA 版 torch。
+- CUDA 下 `select_device` 自动开启 `cudnn.benchmark` 与 `torch.set_float32_matmul_precision("high")`；
+  客户端 DataLoader 在 CUDA 上启用 `pin_memory`；`train`/`evaluate` 用 autocast + GradScaler 跑 AMP
+  （fp16，仅 CUDA 生效，CPU 路径为 no-op）。批大小/加载进程默认 `batch_size=128`、`num_workers=4`。
+- 注意：当前 venv 是 CPU 版 torch（`2.13.0+cpu`），`torch.cuda.is_available()` 为 False，`auto` 实际落在 CPU；
+  要真正用 GPU 需安装 CUDA 版 torch（例如 `pip install torch --index-url https://download.pytorch.org/whl/cu126`）。
 
 ## 安全
 

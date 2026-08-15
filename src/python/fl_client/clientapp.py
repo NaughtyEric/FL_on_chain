@@ -9,11 +9,12 @@ read off ``context.node_config``.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import replace
 from typing import Optional
 
 import flwr as fl
-from flwr.app import Context
+from flwr.app import Context, UserConfigValue
 from flwr.clientapp import ClientApp
 
 from .client import FlowerClient
@@ -31,7 +32,7 @@ def _load_dataset(data_dir: str) -> CIFAR100CoarseDataset:
 
 
 def partition_from_node_config(
-    node_config: dict[str, str], base: Optional[ClientConfig] = None
+    node_config: Mapping[str, UserConfigValue], base: Optional[ClientConfig] = None
 ) -> ClientConfig:
     """Merge the SuperNode ``--node-config`` partition fields into a base config."""
     return replace(

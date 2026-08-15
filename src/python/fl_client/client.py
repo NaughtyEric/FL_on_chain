@@ -20,7 +20,13 @@ class FlowerClient(fl.client.NumPyClient):
         indices = partition_indices(
             len(dataset), config.partition_id, config.num_partitions, config.seed
         )
-        self.loader = DataLoader(Subset(dataset, indices), batch_size=config.batch_size, shuffle=True, num_workers=config.num_workers)
+        self.loader = DataLoader(
+            Subset(dataset, indices),
+            batch_size=config.batch_size,
+            shuffle=True,
+            num_workers=config.num_workers,
+            pin_memory=self.device.type == "cuda",
+        )
         self.sample_count = len(indices)
 
     def get_parameters(self, config: dict) -> list:
