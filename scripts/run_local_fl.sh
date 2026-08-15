@@ -11,6 +11,9 @@
 #   FL_NUM_STEPS     async global updates to run (default 20)
 #   FL_DATA_DIR      HuggingFace CIFAR-100 arrow directory (default data/cifar100)
 #   FL_INIT_WEIGHTS  pre-trained .npz to seed the global model (default none; see scripts/pretrain_model.py)
+#   FL_LEARNING_RATE client SGD learning rate (default 0.1; matches pretrain_model.py)
+#   FL_WEIGHT_DECAY  client SGD weight decay (default 5e-4; matches pretrain_model.py)
+#   FL_MOMENTUM      client SGD momentum (default 0.9; matches pretrain_model.py)
 #   FLWR_HOME        Flower home (default $PWD/.flwr)
 #   PYTHON           python interpreter (default .venv/Scripts/python)
 

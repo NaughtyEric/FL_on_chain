@@ -28,7 +28,15 @@ class FlowerClient(fl.client.NumPyClient):
 
     def fit(self, parameters: list, config: dict) -> tuple[list, int, dict]:
         set_parameters(self.model, parameters)
-        loss = train(self.model, self.loader, self.device, self.config.local_epochs, self.config.learning_rate)
+        loss = train(
+            self.model,
+            self.loader,
+            self.device,
+            self.config.local_epochs,
+            self.config.learning_rate,
+            weight_decay=self.config.weight_decay,
+            momentum=self.config.momentum,
+        )
         return get_parameters(self.model), self.sample_count, {"loss": float(loss)}
 
     def evaluate(self, parameters: list, config: dict) -> tuple[float, int, dict]:

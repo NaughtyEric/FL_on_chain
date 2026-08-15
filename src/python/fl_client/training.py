@@ -38,9 +38,25 @@ def partition_indices(length: int, partition_id: int, num_partitions: int, seed:
     return indices[partition_id::num_partitions]
 
 
-def train(model: nn.Module, loader: DataLoader, device: torch.device, epochs: int, learning_rate: float) -> float:
+def train(
+    model: nn.Module,
+    loader: DataLoader,
+    device: torch.device,
+    epochs: int,
+    learning_rate: float,
+    weight_decay: float = 5e-4,
+    momentum: float = 0.9,
+) -> float:
+    """Train with SGD + momentum + weight decay (ResNet-friendly recipe).
+
+    Weight decay and momentum default to the same values used by
+    ``scripts/pretrain_model.py`` so FL fine-tuning is consistent with the
+    pre-training run.
+    """
     model.train()
-    optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
+    optimizer = torch.optim.SGD(
+        model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay
+    )
     criterion = nn.CrossEntropyLoss()
     total_loss = 0.0
     count = 0

@@ -42,6 +42,10 @@ def test_config_requires_valid_partition():
     with pytest.raises(ValueError):
         ClientConfig(learning_rate=0.0).validate()
     with pytest.raises(ValueError):
+        ClientConfig(weight_decay=-0.1).validate()
+    with pytest.raises(ValueError):
+        ClientConfig(momentum=1.0).validate()
+    with pytest.raises(ValueError):
         ClientConfig(batch_size=0).validate()
     ClientConfig(partition_id=1, num_partitions=2).validate()  # valid boundary
 

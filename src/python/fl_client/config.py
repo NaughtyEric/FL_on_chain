@@ -13,7 +13,9 @@ class ClientConfig:
     seed: int = 42
     batch_size: int = 64
     local_epochs: int = 1
-    learning_rate: float = 0.01
+    learning_rate: float = 0.1
+    weight_decay: float = 5e-4
+    momentum: float = 0.9
     num_workers: int = 0
     device: str = "auto"
 
@@ -26,7 +28,9 @@ class ClientConfig:
             seed=int(os.getenv("FL_SEED", "42")),
             batch_size=int(os.getenv("FL_BATCH_SIZE", "64")),
             local_epochs=int(os.getenv("FL_LOCAL_EPOCHS", "1")),
-            learning_rate=float(os.getenv("FL_LEARNING_RATE", "0.01")),
+            learning_rate=float(os.getenv("FL_LEARNING_RATE", "0.1")),
+            weight_decay=float(os.getenv("FL_WEIGHT_DECAY", "5e-4")),
+            momentum=float(os.getenv("FL_MOMENTUM", "0.9")),
             num_workers=int(os.getenv("FL_NUM_WORKERS", "0")),
             device=os.getenv("FL_DEVICE", "auto"),
         )
@@ -40,3 +44,7 @@ class ClientConfig:
             raise ValueError("batch size, epochs, and workers have invalid values")
         if self.learning_rate <= 0:
             raise ValueError("learning rate must be positive")
+        if self.weight_decay < 0:
+            raise ValueError("weight decay must be non-negative")
+        if not 0 <= self.momentum < 1:
+            raise ValueError("momentum must be in [0, 1)")
