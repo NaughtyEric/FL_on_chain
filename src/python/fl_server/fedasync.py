@@ -74,7 +74,12 @@ def async_update(x: list[np.ndarray], x_u: list[np.ndarray], alpha_t: float) -> 
 
 
 def _parse_staleness_bound(value: object) -> Optional[int]:
-    parsed = int(value)
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text or text.lower() in {"none", "null"}:
+        return None
+    parsed = int(text)
     return None if parsed == _STALENESS_BOUND_UNBOUNDED else parsed
 
 
