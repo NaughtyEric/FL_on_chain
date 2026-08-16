@@ -9,3 +9,6 @@ claude-init.ps1
 /data
 /artifacts
 /.chain-backups
+/.claude
+/paper
+/reference
