@@ -18,6 +18,15 @@ cd src/eth && npx hardhat run scripts/deploy.js --network localhost   # 部署�
 
 详见 [scripts/chain/README.md](chain/README.md)。
 
+本地存储小平台（内容寻址 sha256，Python 标准库，用于模拟链下存储）：
+
+```text
+bash scripts/storage/storage.sh start      # 启动，监听 127.0.0.1:9000
+bash scripts/storage/storage.sh status     # 查看状态
+```
+
+详见 [scripts/storage/README.md](storage/README.md)。
+
 - 拓扑：`flower-superlink`（Control :9093 / Fleet :9092 / AppIo :9091）+ 每分区一个
   `flower-supernode`（ClientAppIo :9104+i），`flwr run . --stream` 前台跑 ServerApp。
 - 节点按 `--node-config "partition-id=i num-partitions=N"` 确定性地切分 CIFAR-100。
