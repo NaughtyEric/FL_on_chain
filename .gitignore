@@ -8,3 +8,4 @@ claude-init.ps1
 /.flwr
 /data
 /artifacts
+/.chain-backups

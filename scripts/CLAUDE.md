@@ -7,6 +7,17 @@ bash scripts/run_local_fl.sh                          # 2 个节点 / 20 步
 FL_NUM_CLIENTS=3 FL_NUM_STEPS=30 bash scripts/run_local_fl.sh
 ```
 
+本地链（Docker + Anvil，状态持久化到卷，随时可恢复）：
+
+```text
+bash scripts/chain/start_chain.sh                     # 启动/恢复（幂等）
+bash scripts/chain/stop_chain.sh                      # 停止（状态自动落盘）
+bash scripts/chain/status_chain.sh                    # 查看状态
+cd src/eth && npx hardhat run scripts/deploy.js --network localhost   # 部署合约
+```
+
+详见 [scripts/chain/README.md](chain/README.md)。
+
 - 拓扑：`flower-superlink`（Control :9093 / Fleet :9092 / AppIo :9091）+ 每分区一个
   `flower-supernode`（ClientAppIo :9104+i），`flwr run . --stream` 前台跑 ServerApp。
 - 节点按 `--node-config "partition-id=i num-partitions=N"` 确定性地切分 CIFAR-100。
