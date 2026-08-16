@@ -114,7 +114,7 @@ app = ServerApp()
 
 @app.main()
 def main(grid: Grid, context: Context) -> None:
-    """FedAsync training loop (paper Algorithm 1, multi-worker variant)."""
+    """FedAsync training loop."""
     cfg = AsyncConfig.from_run_config(context.run_config)
     cfg.validate()
     log(INFO, "FedAsync config: steps=%d alpha=%.2f tau=%.2f staleness_fn=%s bound=%s "

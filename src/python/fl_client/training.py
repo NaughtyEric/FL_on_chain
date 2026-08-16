@@ -58,8 +58,10 @@ def train(
         model.parameters(), lr=learning_rate, momentum=momentum, weight_decay=weight_decay
     )
     criterion = nn.CrossEntropyLoss()
-    use_amp = device.type == "cuda"  # mixed precision only pays off on NVIDIA GPUs
+    ## nvidia mixed precision training (AMP)
+    use_amp = device.type == "cuda"
     scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
+
     total_loss = 0.0
     count = 0
     for _ in range(epochs):
