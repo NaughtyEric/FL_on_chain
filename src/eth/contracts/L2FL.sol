@@ -40,12 +40,22 @@ contract L2FL {
         bool committedToL1;     // 是否已上报 L1
     }
 
+    /// 内容寻址的参数登记记录（对齐 DCMF-BFL：链上只存参数 id/CID 的元数据，
+    /// 大对象在链下 `scripts/storage/` 存储）。
+    struct ParamRecord {
+        address client;       // 上传该参数的参与方
+        uint256 round;        // 所属轮次
+        bytes32 proofHash;    // 训练证明/零知识证明哈希（占位）
+        uint256 uploadedAt;   // 上传时间戳
+    }
+
     // ---------- 状态变量 ----------
 
     address public owner;
     address public l1; // L1 账本地址（跨链桥对端，构造时指定）
     mapping(address => ClientRecord) public clients; // 客户端 => 参与记录
     mapping(uint256 => RoundInfo) public rounds;      // 轮次 => 聚合信息
+    mapping(bytes32 => ParamRecord) public paramRecords; // 参数 id（sha256/CID）=> 登记元数据
     uint256 public latestRound;
 
     // ---------- 事件 ----------
@@ -59,6 +69,12 @@ contract L2FL {
 
     error NotImplemented(); // 框架占位：函数尚未实现
     error NotOwner();
+    error AlreadyApplied();  // 客户端重复申请
+    error NotApproved();     // 客户端尚未通过审批就上传
+    error InvalidRound();    // round == 0
+    error InvalidParamId();  // paramId == bytes32(0)
+    error ParamIdTaken();    // 参数 id 已被其他客户端登记（内容 id 全局唯一）
+    error AlreadyUploaded(); // 同客户端同轮重复上传
 
     constructor(address l1_) {
         owner = msg.sender;
@@ -73,9 +89,13 @@ contract L2FL {
     // ---------- 函数（框架占位） ----------
 
     /// [流程 1] 客户端申请加入联邦学习。
-    /// TODO：身份校验、登记为 APPLIED、分配/创建轮次、触发申请事件。
+    /// @notice 框架阶段：申请即自动通过（正式版由服务端/L2 审批），登记为 APPROVED。
     function applyToJoin() external {
-        revert NotImplemented();
+        if (clients[msg.sender].status != ClientStatus.NONE) revert AlreadyApplied();
+        clients[msg.sender] = ClientRecord(
+            msg.sender, 0, ClientStatus.APPROVED, bytes32(0), bytes32(0), block.timestamp
+        );
+        emit ClientApplied(msg.sender);
     }
 
     /// [流程 2] 服务端下发本轮全局参数（链上仅记录参数哈希，实际参数 off-chain 下发）。
@@ -86,14 +106,26 @@ contract L2FL {
         revert NotImplemented();
     }
 
-    /// [流程 4] 客户端上传本地训练后的参数到 L2。
-    /// @param round      轮次号
-    /// @param paramHash  本地训练后参数哈希
-    /// @param proofHash  训练证明/零知识证明哈希（占位）
-    /// TODO：校验申请已通过、轮次未截止；置 UPLOADED 并累加 uploadCount；
-    ///       建议同一客户端单轮仅可上传一次（防重复）。
-    function uploadParameters(uint256 round, bytes32 paramHash, bytes32 proofHash) external {
-        revert NotImplemented();
+    /// [流程 4] 客户端上传本地训练后的参数 id 到 L2（对齐 DCMF-BFL：
+    /// 参与方把更新存到链下 `scripts/storage/` 得到 sha256 id，仅把该 id 上链登记）。
+    /// @param round     轮次号
+    /// @param paramId   本地训练后参数的内容 id（sha256 / CID，非零、全局唯一）
+    /// @param proofHash 训练证明/零知识证明哈希（占位）
+    /// @notice 要求客户端已 APPROVED；同客户端同轮仅可上传一次；同一 paramId 仅可被一个客户端登记。
+    function uploadParameters(uint256 round, bytes32 paramId, bytes32 proofHash) external {
+        ClientRecord storage rec = clients[msg.sender];
+        if (rec.status == ClientStatus.NONE) revert NotApproved(); // 未申请（申请即自动通过）
+        if (round == 0) revert InvalidRound();
+        if (paramId == bytes32(0)) revert InvalidParamId();
+        if (rec.round == round) revert AlreadyUploaded(); // 同客户端同轮仅可上传一次
+        if (paramRecords[paramId].client != address(0)) revert ParamIdTaken(); // 内容 id 全局唯一
+        rec.round = round;
+        rec.status = ClientStatus.UPLOADED;
+        rec.paramHash = paramId;
+        rec.proofHash = proofHash;
+        rec.uploadedAt = block.timestamp;
+        paramRecords[paramId] = ParamRecord(msg.sender, round, proofHash, block.timestamp);
+        emit ClientUploaded(msg.sender, round, paramId);
     }
 
     /// [流程 5a] L2 分析本轮：校验证明、聚合上传的参数并计算 aggregatedHash。
@@ -114,5 +146,10 @@ contract L2FL {
     /// 查询客户端参与记录。
     function getClient(address client) external view returns (ClientRecord memory) {
         return clients[client];
+    }
+
+    /// 按参数内容 id 查询登记记录（无记录时返回全零 ParamRecord）。
+    function getByParamId(bytes32 paramId) external view returns (ParamRecord memory) {
+        return paramRecords[paramId];
     }
 }
