@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # One-shot local async FedAsync debug run on the modern SuperLink topology.
+# Cross-platform (macOS / Linux / Windows Git Bash): venv 布局自动探测。
 #
 # Topology (all on 127.0.0.1):
 #   flower-superlink          the link (Control :9093 / Fleet :9092 / AppIo :9091)
@@ -15,14 +16,13 @@
 #   FL_WEIGHT_DECAY  client SGD weight decay (default 5e-4; matches pretrain_model.py)
 #   FL_MOMENTUM      client SGD momentum (default 0.9; matches pretrain_model.py)
 #   FLWR_HOME        Flower home (default $PWD/.flwr)
-#   PYTHON           python interpreter (default .venv/Scripts/python)
+#   PYTHON           python interpreter (default: 自动探测 .venv/bin/python 或 .venv/Scripts/python.exe)
 
 set -u
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-PYTHON="${PYTHON:-.venv/Scripts/python}"
 NUM_CLIENTS="${FL_NUM_CLIENTS:-2}"
 NUM_STEPS="${FL_NUM_STEPS:-20}"
 DATA_DIR="${FL_DATA_DIR:-data/cifar100}"
@@ -30,8 +30,30 @@ INIT_WEIGHTS="${FL_INIT_WEIGHTS:-}"
 FLWR_HOME="${FLWR_HOME:-$REPO_ROOT/.flwr}"
 
 export FLWR_HOME FL_DATA_DIR FL_INIT_WEIGHTS="$INIT_WEIGHTS"
-# superlink/supernode spawn `flower-superexec` by bare name; keep venv Scripts on PATH.
-export PATH="$REPO_ROOT/.venv/Scripts:$PATH"
+
+# 跨平台 venv 探测：Windows 用 .venv/Scripts，macOS/Linux 用 .venv/bin。
+if [ -d "$REPO_ROOT/.venv/Scripts" ]; then
+  VENV_BIN="$REPO_ROOT/.venv/Scripts"
+elif [ -d "$REPO_ROOT/.venv/bin" ]; then
+  VENV_BIN="$REPO_ROOT/.venv/bin"
+else
+  echo "未找到虚拟环境 .venv（期望 .venv/Scripts 或 .venv/bin），请先创建" >&2
+  exit 1
+fi
+
+if [ -z "${PYTHON:-}" ]; then
+  if [ -x "$VENV_BIN/python" ]; then
+    PYTHON="$VENV_BIN/python"
+  elif [ -x "$VENV_BIN/python.exe" ]; then
+    PYTHON="$VENV_BIN/python.exe"
+  else
+    echo "未找到虚拟环境解释器（$VENV_BIN/python[.exe]）" >&2
+    exit 1
+  fi
+fi
+
+# superlink/supernode spawn `flower-superexec` by bare name; keep venv bin on PATH.
+export PATH="$VENV_BIN:$PATH"
 
 SUPERLINK_PORT=9093
 FLEET_PORT=9092
