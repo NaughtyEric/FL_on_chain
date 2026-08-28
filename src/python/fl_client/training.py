@@ -46,12 +46,18 @@ def train(
     learning_rate: float,
     weight_decay: float = 5e-4,
     momentum: float = 0.9,
+    max_grad_norm: float = 5.0,
 ) -> float:
     """Train with SGD + momentum + weight decay (ResNet-friendly recipe).
 
     Weight decay and momentum default to the same values used by
     ``scripts/pretrain_model.py`` so FL fine-tuning is consistent with the
     pre-training run.
+
+    ``max_grad_norm`` clips the global gradient L2 norm each step
+    (``min(||g||, tau) * g / ||g||``, cf. DCMF-BFL adaptive clipping with a
+    fixed tau); pass 0 to disable. Under AMP the gradients are unscaled
+    before clipping so the threshold applies to true gradient magnitudes.
     """
     model.train()
     optimizer = torch.optim.SGD(
@@ -71,6 +77,9 @@ def train(
             with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=use_amp):
                 loss = criterion(model(inputs), targets)
             scaler.scale(loss).backward()
+            if max_grad_norm > 0:
+                scaler.unscale_(optimizer)  # AMP: 还原真实梯度量级后再按范数裁剪
+                nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
             scaler.step(optimizer)
             scaler.update()
             total_loss += loss.item() * inputs.size(0)

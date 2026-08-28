@@ -8,6 +8,9 @@ Flower 客户端，独立包，位于 `src/python/fl_client`。
 - 模型为 32×32 适配的残差网络 `CIFAR100ResNet`（`model.py`，3 个残差 stage），默认 20 类输出；服务端可用预训练 `.npz` 当初始权重（`FL_INIT_WEIGHTS`，见 `scripts/pretrain_model.py`）。
 - 客户端本地训练与预训练配方一致：SGD `learning_rate=0.1` + `momentum=0.9` + `weight_decay=5e-4`
   （`ClientConfig` 默认值，可 `FL_LEARNING_RATE`/`FL_MOMENTUM`/`FL_WEIGHT_DECAY` 覆盖）。
+- 每步做全局梯度 L2 范数裁剪 `min(‖g‖, τ)·g/‖g‖`（对齐 DCMF-BFL 的裁剪形式，τ 固定）：
+  默认 `max_grad_norm=5.0`，`FL_MAX_GRAD_NORM` 覆盖，设 0 关闭；AMP 下先 `scaler.unscale_` 再裁剪，
+  阈值作用于真实梯度量级。
 - 数据集为 HuggingFace arrow 格式，位于 `data/cifar100/`，由 `dataset.py` 的 `load_cifar100`/`CIFAR100CoarseDataset` 加载（`coarse_label` 是权威标签，因 fine 标签非连续分组，不能用 `fine // 5`）。
 - `clientapp.py` 的 `ClientApp(client_fn=...)` 由 SuperNode 按消息调用：
   - 从 `context.node_config` 读 `partition-id`/`num-partitions`（SuperNode `--node-config` 设置）确定分片；

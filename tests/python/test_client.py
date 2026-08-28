@@ -47,6 +47,9 @@ def test_config_requires_valid_partition():
         ClientConfig(momentum=1.0).validate()
     with pytest.raises(ValueError):
         ClientConfig(batch_size=0).validate()
+    with pytest.raises(ValueError):
+        ClientConfig(max_grad_norm=-1.0).validate()
+    ClientConfig(max_grad_norm=0.0).validate()  # 0 = clipping disabled, valid
     ClientConfig(partition_id=1, num_partitions=2).validate()  # valid boundary
 
 

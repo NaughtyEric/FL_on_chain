@@ -16,6 +16,7 @@ class ClientConfig:
     learning_rate: float = 0.1
     weight_decay: float = 5e-4
     momentum: float = 0.9
+    max_grad_norm: float = 5.0  # 全局梯度 L2 范数裁剪阈值，0 表示关闭
     num_workers: int = 4
     device: str = "auto"
 
@@ -31,6 +32,7 @@ class ClientConfig:
             learning_rate=float(os.getenv("FL_LEARNING_RATE", "0.1")),
             weight_decay=float(os.getenv("FL_WEIGHT_DECAY", "5e-4")),
             momentum=float(os.getenv("FL_MOMENTUM", "0.9")),
+            max_grad_norm=float(os.getenv("FL_MAX_GRAD_NORM", "5.0")),
             num_workers=int(os.getenv("FL_NUM_WORKERS", "4")),
             device=os.getenv("FL_DEVICE", "auto"),
         )
@@ -48,3 +50,5 @@ class ClientConfig:
             raise ValueError("weight decay must be non-negative")
         if not 0 <= self.momentum < 1:
             raise ValueError("momentum must be in [0, 1)")
+        if self.max_grad_norm < 0:
+            raise ValueError("max_grad_norm must be non-negative (0 disables clipping)")

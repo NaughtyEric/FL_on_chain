@@ -42,6 +42,7 @@ class FlowerClient(fl.client.NumPyClient):
             self.config.learning_rate,
             weight_decay=self.config.weight_decay,
             momentum=self.config.momentum,
+            max_grad_norm=self.config.max_grad_norm,
         )
         return get_parameters(self.model), self.sample_count, {"loss": float(loss)}
 
