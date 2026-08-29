@@ -55,16 +55,20 @@ describe("FL on-chain flow (framework)", function () {
     const paramId = ethers.keccak256(ethers.toUtf8Bytes("client-update-1"));
     const proofHash = ethers.keccak256(ethers.toUtf8Bytes("training-proof"));
 
-    await expect(l2.connect(client).uploadParameters(1, paramId, proofHash))
+    const tx = await l2.connect(client).uploadParameters(1, paramId, proofHash);
+    const receipt = await tx.wait();
+    // 不可篡改时间戳：事件里的 uploadedAt 必须等于交易所在区块的共识时间
+    const blockTime = (await ethers.provider.getBlock(receipt.blockNumber)).timestamp;
+    await expect(tx)
       .to.emit(l2, "ClientUploaded")
-      .withArgs(client.address, 1, paramId);
+      .withArgs(client.address, 1, paramId, blockTime);
 
-    // 按参数 id 查询登记记录
+    // 按参数 id 查询登记记录，时间戳与事件/区块一致
     const rec = await l2.getByParamId(paramId);
     expect(rec.client).to.equal(client.address);
     expect(rec.round).to.equal(1);
     expect(rec.proofHash).to.equal(proofHash);
-    expect(rec.uploadedAt).to.be.gt(0);
+    expect(rec.uploadedAt).to.equal(blockTime);
 
     // 客户端记录同步更新
     const crec = await l2.getClient(client.address);

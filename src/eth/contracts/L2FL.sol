@@ -62,7 +62,8 @@ contract L2FL {
 
     event ClientApplied(address indexed client);
     event ParamsDistributed(uint256 indexed round, bytes32 paramsHash);
-    event ClientUploaded(address indexed client, uint256 indexed round, bytes32 paramHash);
+    // uploadedAt 由链共识赋值（block.timestamp），客户端不可自报，事件日志即不可篡改的时间凭证。
+    event ClientUploaded(address indexed client, uint256 indexed round, bytes32 paramHash, uint256 uploadedAt);
     event RoundCommittedToL1(uint256 indexed round, bytes32 aggregatedHash);
 
     // ---------- 错误 ----------
@@ -119,13 +120,14 @@ contract L2FL {
         if (paramId == bytes32(0)) revert InvalidParamId();
         if (rec.round == round) revert AlreadyUploaded(); // 同客户端同轮仅可上传一次
         if (paramRecords[paramId].client != address(0)) revert ParamIdTaken(); // 内容 id 全局唯一
+        uint256 uploadedAt = block.timestamp; // 时间戳由共识赋值，不接受调用方传入
         rec.round = round;
         rec.status = ClientStatus.UPLOADED;
         rec.paramHash = paramId;
         rec.proofHash = proofHash;
-        rec.uploadedAt = block.timestamp;
-        paramRecords[paramId] = ParamRecord(msg.sender, round, proofHash, block.timestamp);
-        emit ClientUploaded(msg.sender, round, paramId);
+        rec.uploadedAt = uploadedAt;
+        paramRecords[paramId] = ParamRecord(msg.sender, round, proofHash, uploadedAt);
+        emit ClientUploaded(msg.sender, round, paramId, uploadedAt);
     }
 
     /// [流程 5a] L2 分析本轮：校验证明、聚合上传的参数并计算 aggregatedHash。
