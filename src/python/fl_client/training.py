@@ -1,33 +1,8 @@
 from __future__ import annotations
 
-from typing import Any, Protocol
-
 import torch
 from torch import nn
-from torch.utils.data import DataLoader, Dataset
-
-
-class IndexableDataset(Protocol):
-    """A map-style dataset: sized and indexable by integer position."""
-
-    def __len__(self) -> int: ...
-
-    def __getitem__(self, index: int) -> Any: ...
-
-
-class CoarseLabelDataset(Dataset):
-    """Wrap a CIFAR-100 dataset to expose coarse (superclass) labels.
-    """
-
-    def __init__(self, dataset: IndexableDataset) -> None:
-        self.dataset = dataset
-
-    def __len__(self) -> int:
-        return len(self.dataset)
-
-    def __getitem__(self, index: int) -> tuple[object, int]:
-        inputs, fine_label = self.dataset[index]
-        return inputs, int(fine_label) // 5
+from torch.utils.data import DataLoader
 
 
 def partition_indices(length: int, partition_id: int, num_partitions: int, seed: int) -> list[int]:

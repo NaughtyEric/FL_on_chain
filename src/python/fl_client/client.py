@@ -4,14 +4,15 @@ import flwr as fl
 from torch.utils.data import DataLoader, Subset
 
 from .config import ClientConfig
+from .dataset import CIFAR100CoarseDataset
 from .device import select_device
 from .model import CIFAR100ResNet, COARSE_CLASSES
 from .parameters import get_parameters, set_parameters
-from .training import evaluate, IndexableDataset, partition_indices, train
+from .training import evaluate, partition_indices, train
 
 
 class FlowerClient(fl.client.NumPyClient):
-    def __init__(self, config: ClientConfig, dataset: IndexableDataset) -> None:
+    def __init__(self, config: ClientConfig, dataset: CIFAR100CoarseDataset) -> None:
         """``dataset`` is a map-style dataset already yielding ``(inputs, coarse_label)``."""
         config.validate()
         self.config = config

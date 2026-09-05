@@ -7,20 +7,7 @@ from fl_client.config import ClientConfig
 from fl_client.device import select_device
 from fl_client.model import CIFAR100ResNet, COARSE_CLASSES
 from fl_client.parameters import load_parameters, save_parameters
-from fl_client.training import CoarseLabelDataset, partition_indices
-
-
-class _FakeDataset:
-    """Map-style dataset whose fine labels are 10 apart, i.e. coarse = 2 * index."""
-
-    def __init__(self, size: int) -> None:
-        self._size = size
-
-    def __len__(self) -> int:
-        return self._size
-
-    def __getitem__(self, index: int) -> tuple[torch.Tensor, int]:
-        return torch.zeros(3, 32, 32), index * 10
+from fl_client.training import partition_indices
 
 
 def test_partition_is_deterministic_and_disjoint():
@@ -64,12 +51,6 @@ def test_partition_from_node_config():
     # Out-of-range node config is rejected at validate() time by client_fn.
     with pytest.raises(ValueError):
         partition_from_node_config({"partition-id": "5", "num-partitions": "4"}).validate()
-
-
-def test_coarse_label_dataset_maps_fine_to_coarse():
-    wrapped = CoarseLabelDataset(_FakeDataset(10))
-    assert len(wrapped) == 10
-    assert [wrapped[i][1] for i in range(10)] == [0, 2, 4, 6, 8, 10, 12, 14, 16, 18]
 
 
 def test_model_defaults_to_coarse_classes():
