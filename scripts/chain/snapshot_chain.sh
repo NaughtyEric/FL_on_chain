@@ -5,7 +5,7 @@
 set -eu
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-NAME="${CHAIN_NAME:-fl-chain}"
+NAME="${CHAIN_NAME:-fl-devnet}"
 BACKUP_DIR="${CHAIN_BACKUP_DIR:-$REPO_ROOT/.chain-backups}"
 
 mkdir -p "$BACKUP_DIR"

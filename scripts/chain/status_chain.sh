@@ -3,8 +3,8 @@
 
 set -eu
 
-NAME="${CHAIN_NAME:-fl-chain}"
-VOLUME="${CHAIN_VOLUME:-fl-chain-data}"
+NAME="${CHAIN_NAME:-fl-devnet}"
+VOLUME="${CHAIN_VOLUME:-fl-devnet-data}"
 PORT="${CHAIN_PORT:-8545}"
 
 if ! docker container inspect "$NAME" >/dev/null 2>&1; then

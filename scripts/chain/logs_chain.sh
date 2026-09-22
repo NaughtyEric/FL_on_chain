@@ -3,7 +3,7 @@
 
 set -eu
 
-NAME="${CHAIN_NAME:-fl-chain}"
+NAME="${CHAIN_NAME:-fl-devnet}"
 LINES="${1:-100}"
 
 docker logs -f --tail "$LINES" "$NAME"

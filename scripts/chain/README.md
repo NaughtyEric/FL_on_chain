@@ -24,7 +24,7 @@
 
 ## 状态与恢复
 
-- 状态保存在 Docker 命名卷 `fl-chain-data` 的 `/data/anvil-state.json`。
+- 状态保存在 Docker 命名卷 `fl-devnet-data` 的 `/data/anvil-state.json`。
 - 正常恢复：`stop_chain.sh` 之后、或机器重启之后，直接 `start_chain.sh` 即可，无需手工操作。
 - 快照 / 回滚：
 
@@ -33,11 +33,11 @@
   bash scripts/chain/snapshot_chain.sh
 
   # 恢复指定快照
-  docker cp .chain-backups/anvil-state-<时间戳>.json fl-chain:/data/anvil-state.json
+  docker cp .chain-backups/anvil-state-<时间戳>.json fl-devnet:/data/anvil-state.json
   bash scripts/chain/restart_chain.sh
   ```
 
-- 彻底删除链（状态不可恢复，慎用）：`docker rm -f fl-chain && docker volume rm fl-chain-data`
+- 彻底删除链（状态不可恢复，慎用）：`docker rm -f fl-devnet && docker volume rm fl-devnet-data`
 
 ## 部署合约
 

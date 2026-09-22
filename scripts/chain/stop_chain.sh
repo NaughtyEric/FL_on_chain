@@ -3,7 +3,7 @@
 
 set -eu
 
-NAME="${CHAIN_NAME:-fl-chain}"
+NAME="${CHAIN_NAME:-fl-devnet}"
 
 if docker container inspect "$NAME" >/dev/null 2>&1; then
   docker stop "$NAME"
