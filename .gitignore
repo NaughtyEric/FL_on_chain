@@ -12,3 +12,4 @@ claude-init.ps1
 /.claude
 /paper
 /reference
+.DS_store
