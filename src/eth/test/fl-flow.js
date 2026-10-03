@@ -9,7 +9,8 @@ describe("FL on-chain flow (framework)", function () {
     [owner, client] = await ethers.getSigners();
 
     const L1FL = await ethers.getContractFactory("L1FL");
-    l1 = await L1FL.deploy();
+    // challengePeriod=1 天, commitBond=1 ETH, challengeBond=0.5 ETH（生命周期细节见 l1-round-lifecycle.js）
+    l1 = await L1FL.deploy(24 * 3600, ethers.parseEther("1"), ethers.parseEther("0.5"));
     await l1.waitForDeployment();
 
     const L2FL = await ethers.getContractFactory("L2FL");
@@ -37,8 +38,8 @@ describe("FL on-chain flow (framework)", function () {
     // 流程 5：L2 分析 + 上报 L1
     await expect(l2.analyzeAndAggregate(1)).to.be.revertedWithCustomError(l2, "NotImplemented");
     await expect(l2.commitToL1(1)).to.be.revertedWithCustomError(l2, "NotImplemented");
-    // L1 登记/落账
-    await expect(l1.registerParticipant(client.address, 1)).to.be.revertedWithCustomError(l1, "NotImplemented");
+    // L1 激励
+    await expect(l1.payReward(client.address, 1)).to.be.revertedWithCustomError(l1, "NotImplemented");
   });
 
   it("applies to join: client becomes APPROVED; duplicate apply reverts", async function () {
