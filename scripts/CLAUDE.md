@@ -11,6 +11,6 @@ cd src/eth && npx hardhat run scripts/deploy.js --network localhost   # 部署�
 ```
 
 - 节点按 `--node-config "partition-id=i num-partitions=N"` 确定性切分 CIFAR-100；
-  数据集为 HF arrow 格式，已在 `data/cifar100/`，无需下载。
+  数据集为 HF arrow 格式，位于 `data/cifar100/`（不入库）；新环境先跑 `python scripts/fetch_data.py` 下载。
 - 可选预训练起步：`scripts/pretrain_model.py` 生成 `.npz`，`FL_INIT_WEIGHTS=<path>` 传给 run_local_fl.sh。
 - 产物与日志在 `FLWR_HOME`（默认 `.flwr/`）；脚本退出时 trap 自动清理 superlink/supernode。
